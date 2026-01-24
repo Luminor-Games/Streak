@@ -1,0 +1,36 @@
+plugins {
+    id 'java'
+}
+
+group = 'games.luminor'
+version = '1.0.0'
+
+def targetJava = 21
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(targetJava)
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://repo.papermc.io/repository/maven-public/' }
+}
+
+dependencies {
+    compileOnly 'io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT'
+    implementation 'org.xerial:sqlite-jdbc:3.46.1.0'
+    implementation 'com.google.code.gson:gson:2.10.1'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release.set(targetJava)
+}
+
+jar {
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}

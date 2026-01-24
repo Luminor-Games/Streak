@@ -1,0 +1,15 @@
+name: LuminorStreak
+main: games.luminor.streak.LuminorStreakPlugin
+version: 1.0.0
+api-version: '1.21'
+commands:
+  streak:
+    description: Daily streak status and management
+    usage: /streak [help|top|update|reset|resetall|reload]
+permissions:
+  luminor.admin.streakupdate:
+    default: op
+  luminor.admin.streakreset:
+    default: op
+  luminor.admin.streakreload:
+    default: op
