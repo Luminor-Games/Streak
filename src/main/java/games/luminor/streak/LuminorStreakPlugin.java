@@ -49,7 +49,7 @@ public class LuminorStreakPlugin extends JavaPlugin implements Listener, Command
         }
 
         streakService = new StreakService(this, database);
-        statsReader = new StatsReader(getPrimaryWorldFolder());
+        statsReader = new StatsReader(getServer().getWorldContainer(), getPrimaryWorldFolder());
 
         getServer().getPluginManager().registerEvents(this, this);
         getCommand("streak").setExecutor(this);
