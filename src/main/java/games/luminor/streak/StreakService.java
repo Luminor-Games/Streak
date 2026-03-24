@@ -6,8 +6,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.sql.SQLException;
-import java.time.LocalDate;
-import java.time.ZoneId;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,9 +23,12 @@ public class StreakService {
     private final Random random = new Random();
     private final Map<UUID, PlayerState> cache = new ConcurrentHashMap<>();
 
+    private long updateTimeMills;
+
     public StreakService(LuminorStreakPlugin plugin, Database database) {
         this.plugin = plugin;
         this.database = database;
+        updateTimeMills = calculateTime();
     }
 
     public void onJoin(Player player) {
@@ -95,6 +97,23 @@ public class StreakService {
                 player.sendMessage(color("&8/streak help &7— как это работает"));
             }
         }
+
+        if (updateTimeMills <= System.currentTimeMillis()) {
+            updateDay(null);
+        }
+    }
+
+    private void log(String msg, CommandSender sender) {
+        if (sender == null) plugin.getLogger().info(msg);
+        else sender.sendMessage(msg);
+    }
+
+    public long calculateTime() { // calculate update time in mills on Moscow
+        ZonedDateTime zonedUpdateTime = ZonedDateTime.of(
+                LocalDate.now().plusDays(1).atTime(0, 0),
+                ZoneId.of("Europe/Moscow")
+        );
+        return zonedUpdateTime.toInstant().toEpochMilli();
     }
 
     public void showStatus(CommandSender sender, PlayerState state) {
@@ -146,15 +165,17 @@ public class StreakService {
 
     public boolean updateDay(CommandSender sender) {
         String today = LocalDate.now(ZoneId.systemDefault()).format(DAY_FORMAT);
+        updateTimeMills = calculateTime();
+
         try {
             String dayKey = database.getMeta("day.key");
             if (today.equals(dayKey)) {
-                sender.sendMessage("STREAK: update skipped (already updated today) day=" + dayKey);
+                log("STREAK: update skipped (already updated today) day=" + dayKey, sender);
                 return false;
             }
 
             database.setMeta("day.key", today);
-            sender.sendMessage("STREAK: update fired day=" + today);
+            log("STREAK: update fired day=" + today, sender);
 
             List<PlayerState> players = database.loadAllPlayers();
             for (PlayerState state : players) {
@@ -190,10 +211,10 @@ public class StreakService {
                 }
             }
 
-            sender.sendMessage("STREAK: update finished");
+            log("STREAK: update finished", sender);
             return true;
         } catch (SQLException e) {
-            sender.sendMessage("STREAK: update failed: " + e.getMessage());
+            log("STREAK: update failed: " + e.getMessage(), sender);
             return false;
         }
     }
